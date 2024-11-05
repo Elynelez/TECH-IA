@@ -56,7 +56,7 @@ app.post('/api/python', upload.single('audio'), (req, res) => {
 
         const audioFilePath = req.file.path; // Ruta del archivo de audio
         const pythonScriptPath = path.join(__dirname, 'index.py');
-        const pythonCommand = process.platform === "win32" ? "python" : "python3";
+        const pythonCommand = process.platform === "win32" ? "python" : "python";
     
         // Ejecutar el script de Python
         exec(`${pythonCommand} "${pythonScriptPath}" "${audioFilePath}"`, (error, stdout, stderr) => {
