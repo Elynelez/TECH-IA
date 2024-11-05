@@ -33,7 +33,7 @@ app.post('/api/python', upload.single('audio'), (req, res) => {
     console.log(req.body)
 
     if (!req.file) {
-        return res.status(400).send('No se ha cargado ningún archivo.');
+        return res.json({message: "No se ha cargado ningún archivo."});
     }
 
     const { username, password, slang } = req.body;
@@ -42,7 +42,7 @@ app.post('/api/python', upload.single('audio'), (req, res) => {
     fs.readFile(databasePath, 'utf8', (err, data) => {
         if (err) {
             console.error('Error al leer el archivo de base de datos:', err);
-            return res.status(500).send('Error al leer la base de datos.');
+            return res.json({message: "error al leer la base de datos"})
         }
 
         // Parsear el contenido JSON
