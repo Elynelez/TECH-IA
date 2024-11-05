@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login con reCAPTCHA</title>
+    <!-- Importar Tailwind CSS desde CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm">
+            <h1 class="text-2xl font-bold mb-6 text-center text-gray-700">Iniciar Sesión</h1>
+
+            <!-- Formulario de Login -->
+            <form id="loginForm" class="space-y-4" action="#" enctype="multipart/form-data">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700">Usuario</label>
+                    <input type="text" id="username" name="username" required
+                        class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+                    <input type="password" id="password" name="password" required
+                        class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <!-- Caja de reCAPTCHA -->
+                <div class="border-solid border-2 border-gray-200 flex items-center justify-between mt-4">
+                    <button type="button" id="captchaButton"
+                        class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                        Verificar CAPTCHA
+                    </button>
+                    <img src="captcha.png" alt="Captcha" class="h-12 ml-4">
+                </div>
+                <br>
+                <div id="slangContainer" class="mt-4 hidden p-4 bg-gray-100 rounded-lg border border-gray-300">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-2 text-center">Lee la siguiente frase</h2>
+                    <p class="text-center text-gray-700 font-semibold italic" id="slangPhrase"></p>
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700">
+                        Iniciar Sesión
+                    </button>
+
+                    <div id="spinner"
+                        class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 hidden">
+                        <svg class="animate-spin h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </form>
+            <audio id="audioPlayback" controls class="mt-4 w-full" style="display:none;"></audio>
+            <!-- Mostrar resultados -->
+            <p id="resultado" class="mt-4 text-center text-sm text-gray-600"></p>
+
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob;
+        let audioRecorded = false;
+        let currentPhrase = "";
+
+        const captchaButton = document.getElementById('captchaButton');
+        const slangContainer = document.getElementById('slangContainer');
+        const slangPhrase = document.getElementById('slangPhrase');
+        const spinner = document.getElementById('spinner');
+
+        captchaButton.addEventListener('click', async () => {
+            if (!mediaRecorder || mediaRecorder.state === "inactive") {
+                // Iniciar grabación de audio
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.start();
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audioPlayback = document.getElementById('audioPlayback');
+                    audioPlayback.src = audioUrl;
+                    audioPlayback.style.display = 'block';
+
+                    audioRecorded = true;
+                    // Ocultar el contenedor de la frase después de detener la grabación
+                    slangContainer.classList.add('hidden');
+
+                    captchaButton.textContent = "Verificar CAPTCHA";
+                    captchaButton.classList.remove("bg-red-600");
+                    captchaButton.classList.add("bg-blue-600");
+                };
+
+                // Mostrar la frase solo cuando se inicia la grabación
+                fetch('/database.json')
+                    .then(response => response.json())
+                    .then(data => {
+                        const slangs = data.slangs;
+                        const randomSlang = slangs[Math.floor(Math.random() * slangs.length)];
+                        currentPhrase = randomSlang
+                        slangPhrase.textContent = randomSlang;
+                        slangContainer.classList.remove('hidden');
+                    })
+                    .catch(error => console.error('Error al cargar la frase:', error));
+
+                captchaButton.textContent = "Grabando...";
+                captchaButton.classList.remove("bg-blue-600");
+                captchaButton.classList.add("bg-red-600");
+
+                // Permitir detener la grabación al presionar el botón nuevamente
+                captchaButton.onclick = () => {
+                    if (mediaRecorder.state === "recording") {
+                        mediaRecorder.stop();
+                    }
+                };
+            }
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            if (!audioRecorded) {
+                e.preventDefault();
+                alert("¡Por favor, graba el audio antes de enviar el formulario!");
+            } else {
+                e.preventDefault();
+                spinner.classList.remove("hidden");
+                const formData = new FormData(e.target);
+                formData.append('audio', audioBlob, 'grabacion.wav')
+                formData.append('slang', currentPhrase)
+
+                fetch('/api/python', {
+                    method: 'POST',
+                    body: formData,
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('resultado').textContent = data.message;
+
+                        if (data.message.includes("Usuario o contraseña incorrectos.")) {
+                            const usernameInput = document.getElementById('username');
+                            const passwordInput = document.getElementById('password');
+                            usernameInput.classList.add('border-red-500');
+                            passwordInput.classList.add('border-red-500');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error))
+                    .finally(() => {
+                        spinner.classList.add("hidden"); // Ocultar el spinner
+                    });
+                audioRecorded = false;
+            }
+        });
+    </script>
+</body>
+
+</html>
