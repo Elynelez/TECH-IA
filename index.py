@@ -33,11 +33,9 @@ def message(audio_file):
             return {'message': text}
 
         except sr.UnknownValueError:
-            print("No se pudo entender el audio.")
             return {'message': "No se pudo entender el audio."}
 
         except sr.RequestError:
-            print("Error al intentar obtener resultados del servicio de reconocimiento de Google.")
             return {'message': "Error en el servicio de reconocimiento de Google."}
 
 if __name__ == "__main__":

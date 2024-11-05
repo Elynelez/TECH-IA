@@ -56,16 +56,17 @@ app.post('/api/python', upload.single('audio'), (req, res) => {
 
         const audioFilePath = req.file.path; // Ruta del archivo de audio
         const pythonScriptPath = path.join(__dirname, 'index.py');
+        const pythonCommand = process.platform === "win32" ? "python" : "python3";
     
         // Ejecutar el script de Python
-        exec(`python "${pythonScriptPath}" "${audioFilePath}"`, (error, stdout, stderr) => {
+        exec(`${pythonCommand} "${pythonScriptPath}" "${audioFilePath}"`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error ejecutando el script: ${error.message}`);
-                return res.status(500).send('Error ejecutando el script de Python.');
+                return res.json({message:'Error ejecutando el script de Python.'});
             }
             if (stderr) {
                 console.error(`Error en el script: ${stderr}`);
-                return res.status(500).send('Error en el script de Python.');
+                return res.json({message:'Error en el script de Python.'});
             }
     
             // Procesar la salida del script Python
