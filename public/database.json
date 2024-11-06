@@ -21,6 +21,30 @@
             "url_data": "dataset/Eddy/cut"
         }
     ],
+    "dataset": {
+        "Elian": {
+            "org": {
+                "elian.wav": "1wmNGquzGwgjyXhrGjPskSOCRykt7SpAX"
+            }
+        },
+        "Edison": {
+            "org": {
+                "Edison.wav": "1aHToYsXRU9y3342lBnS6IEo1hADrWa1T"
+            }
+        },
+        "Eddy": {
+            "org": {
+                "SANTIAGO.wav": "1cWi4O8zLozbby6dZPzqO4rMXxUVOre0m"
+            }
+        },
+        "Diego": {
+            "org": {
+                "DQ BBC Asteroides Cel.wav": "1ldmdXJeoCJypFmY2P55Iq1-mKw14hOVX",
+                "DQ BBC Asteroides PC.wav": "1jTtvLSb2s3U0fF015hNMyrnzzSynFABB",
+                "DQ BBC Internet.wav": "1pXL2KOAbP8tq4mFjstdEJgl29PvA6TSC"
+            }
+        }
+    },
     "slangs": [
         "a palabras necias oidos sordos",
         "a quien madruga dios le ayuda",
