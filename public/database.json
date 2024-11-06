@@ -24,24 +24,24 @@
     "dataset": {
         "Elian": {
             "org": {
-                "elian.wav": "1kw9FDDKY_53lJj9N1AHUhhu-CEP4_Ah0"
+                "elian.wav": "https://www.dropbox.com/scl/fi/dg2jzsz607c4i64p9pllk/elian_1.wav?rlkey=sb432ri1sm9yvgd3e5anbame2&st=tz9qfmke&dl=1"
             }
         },
         "Edison": {
             "org": {
-                "Edison.wav": "1aHToYsXRU9y3342lBnS6IEo1hADrWa1T"
+                "Edison.wav": "https://www.dropbox.com/scl/fi/e2p2yjlwrqhdgui4rebiv/Edison_1.wav?rlkey=a6xdzpici67640a9pd776rku8&st=04l5h2fd&dl=1"
             }
         },
         "Eddy": {
             "org": {
-                "SANTIAGO.wav": "1cWi4O8zLozbby6dZPzqO4rMXxUVOre0m"
+                "SANTIAGO.wav": "https://www.dropbox.com/scl/fi/ka0e5jye00jqg33ix729a/eddy_1.wav?rlkey=8kl5pl71y5vcthw3qjl17264e&st=ixzfz1fk&dl=1"
             }
         },
         "Diego": {
             "org": {
-                "DQ BBC Asteroides Cel.wav": "1ldmdXJeoCJypFmY2P55Iq1-mKw14hOVX",
-                "DQ BBC Asteroides PC.wav": "1jTtvLSb2s3U0fF015hNMyrnzzSynFABB",
-                "DQ BBC Internet.wav": "1pXL2KOAbP8tq4mFjstdEJgl29PvA6TSC"
+                "DQ BBC Asteroides Cel.wav": "https://www.dropbox.com/scl/fi/ch247tiojl4aj3jfduje2/diego_1.wav?rlkey=c4b7ru0c0sce4w2m3zscrcfdd&st=xkhe75fk&dl=1",
+                "DQ BBC Asteroides PC.wav": "https://www.dropbox.com/scl/fi/g6olhkqxjoj1iqjz9kfkx/diego_2.wav?rlkey=dcvsuba3yy69gi6pfg8y3tpzu&st=teemfveo&dl=1",
+                "DQ BBC Internet.wav": "https://www.dropbox.com/scl/fi/mh7sg6r0v7omjpd4xy6h2/diego_3.wav?rlkey=92obw7wgybyk1mb2mqr2n68jf&st=h2rtjihl&dl=1"
             }
         }
     },

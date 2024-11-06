@@ -36,13 +36,12 @@ async function downloadAudioFiles() {
         const orgPath = path.join(datasetPath, folderName, 'org');
         fs.mkdirSync(orgPath, { recursive: true });
 
-        for (const [fileName, fileId] of Object.entries(folderContent.org)) {
+        for (const [fileName, fileUrl] of Object.entries(folderContent.org)) {
             const localFilePath = path.join(orgPath, fileName);
 
             // Solo descargar si el archivo no existe
             if (!fs.existsSync(localFilePath)) {
-                const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                const response = await fetch(url);
+                const response = await fetch(fileUrl);
 
                 if (response.ok) {
                     const fileStream = fs.createWriteStream(localFilePath);
@@ -55,6 +54,7 @@ async function downloadAudioFiles() {
         }
     }
 }
+
 
 function getAudioCounts() {
     const result = {};
@@ -96,36 +96,36 @@ function getAudioCounts() {
         const audioCounts = getAudioCounts();
         res.json(audioCounts);
     });
-    
+
     await app.post('/api/python', upload.single('audio'), (req, res) => {
         console.log(req.body)
-    
+
         if (!req.file) {
             return res.json({ message: "No se ha cargado ningún archivo." });
         }
-    
+
         const { username, password, slang } = req.body;
-    
+
         // Leer el archivo database.json
         fs.readFile(databasePath, 'utf8', (err, data) => {
             if (err) {
                 console.error('Error al leer el archivo de base de datos:', err);
                 return res.json({ message: "error al leer la base de datos" })
             }
-    
+
             // Parsear el contenido JSON
             const usersData = JSON.parse(data);
             const user = usersData.users.find(user => user.user === username && user.password === password);
-    
+
             // Comprobar si el usuario existe y la contraseña es correcta
             if (!user) {
                 return res.json({ message: 'Usuario o contraseña incorrectos.' });
             }
-    
+
             const audioFilePath = req.file.path; // Ruta del archivo de audio
             const pythonScriptPath = path.join(__dirname, 'index.py');
             const pythonCommand = process.platform === "win32" ? "python" : "python3";
-    
+
             // Ejecutar el script de Python
             exec(`${pythonCommand} "${pythonScriptPath}" "${audioFilePath}"`, (error, stdout, stderr) => {
                 if (error) {
@@ -136,7 +136,7 @@ function getAudioCounts() {
                     console.error(`Error en el script: ${stderr}`);
                     return res.json({ message: 'Error en el script de Python.' });
                 }
-    
+
                 // Procesar la salida del script Python
                 const response = JSON.parse(stdout);
                 if (response.message.toLowerCase() == slang.toLowerCase()) {
@@ -144,11 +144,11 @@ function getAudioCounts() {
                 } else {
                     res.json({ message: 'La frase no coincide.' })
                 }
-    
+
             });
         });
     });
-    
+
     // Iniciar el servidor
     await app.listen(port, () => {
         console.log(`Servidor escuchando en http://localhost:${port}`);
