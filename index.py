@@ -2,6 +2,7 @@ import sys
 import json
 import speech_recognition as sr
 from pydub import AudioSegment
+from helpers.cutAudios import cut_and_normalize_audios
 
 def convert_audio_to_wav(audio_file):
     # Cargar el archivo de audio usando pydub
@@ -39,6 +40,7 @@ def message(audio_file):
             return {'message': "Error en el servicio de reconocimiento de Google."}
 
 if __name__ == "__main__":
+    cut_and_normalize_audios()
     # Asegurarse de que se pase el archivo de audio como argumento
     if len(sys.argv) > 1:
         audio_file_path = sys.argv[1]

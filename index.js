@@ -20,20 +20,51 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 const databasePath = path.join(__dirname, 'public/database.json');
+const datasetPath = path.join(__dirname, 'dataset');
 
-// Ruta simple que responde con un objeto JSON
-app.get('/api/saludo', (req, res) => {
-  res.json({
-    mensaje: '¡Hola, este es un endpoint de prueba!',
-    exito: true
-  });
+function getAudioCounts() {
+    const result = {};
+
+    // Recorre cada carpeta dentro de 'dataset'
+    fs.readdirSync(datasetPath).forEach((folder) => {
+        const folderPath = path.join(datasetPath, folder);
+        const orgPath = path.join(folderPath, 'org');
+        const cutPath = path.join(folderPath, 'cut');
+
+        // Inicializa el conteo de archivos
+        let orgCount = 0;
+        let cutCount = 0;
+
+        // Cuenta los archivos en la carpeta 'org' si existe
+        if (fs.existsSync(orgPath)) {
+            orgCount = fs.readdirSync(orgPath).filter(file => file.endsWith('.wav')).length;
+        }
+
+        // Cuenta los archivos en la carpeta 'cut' si existe
+        if (fs.existsSync(cutPath)) {
+            cutCount = fs.readdirSync(cutPath).filter(file => file.endsWith('.wav')).length;
+        }
+
+        // Almacena los conteos en el objeto de resultados
+        result[folder] = {
+            org: orgCount,
+            cut: cutCount
+        };
+    });
+
+    return result;
+}
+
+app.get('/api/audios', (req, res) => {
+    const audioCounts = getAudioCounts();
+    res.json(audioCounts);
 });
 
 app.post('/api/python', upload.single('audio'), (req, res) => {
     console.log(req.body)
 
     if (!req.file) {
-        return res.json({message: "No se ha cargado ningún archivo."});
+        return res.json({ message: "No se ha cargado ningún archivo." });
     }
 
     const { username, password, slang } = req.body;
@@ -42,7 +73,7 @@ app.post('/api/python', upload.single('audio'), (req, res) => {
     fs.readFile(databasePath, 'utf8', (err, data) => {
         if (err) {
             console.error('Error al leer el archivo de base de datos:', err);
-            return res.json({message: "error al leer la base de datos"})
+            return res.json({ message: "error al leer la base de datos" })
         }
 
         // Parsear el contenido JSON
@@ -51,37 +82,37 @@ app.post('/api/python', upload.single('audio'), (req, res) => {
 
         // Comprobar si el usuario existe y la contraseña es correcta
         if (!user) {
-            return res.json({message: 'Usuario o contraseña incorrectos.'});
+            return res.json({ message: 'Usuario o contraseña incorrectos.' });
         }
 
         const audioFilePath = req.file.path; // Ruta del archivo de audio
         const pythonScriptPath = path.join(__dirname, 'index.py');
         const pythonCommand = process.platform === "win32" ? "python" : "python3";
-    
+
         // Ejecutar el script de Python
         exec(`${pythonCommand} "${pythonScriptPath}" "${audioFilePath}"`, (error, stdout, stderr) => {
             if (error) {
                 console.error(`Error ejecutando el script: ${error.message}`);
-                return res.json({message:'Error ejecutando el script de Python.'});
+                return res.json({ message: 'Error ejecutando el script de Python.' });
             }
             if (stderr) {
                 console.error(`Error en el script: ${stderr}`);
-                return res.json({message:'Error en el script de Python.'});
+                return res.json({ message: 'Error en el script de Python.' });
             }
-    
+
             // Procesar la salida del script Python
             const response = JSON.parse(stdout);
-            if(response.message.toLowerCase() == slang.toLowerCase()){
+            if (response.message.toLowerCase() == slang.toLowerCase()) {
                 res.json(response)
             } else {
-                res.json({message: 'La frase no coincide.'})
+                res.json({ message: 'La frase no coincide.' })
             }
-            
+
         });
     });
 });
 
 // Iniciar el servidor
 app.listen(port, () => {
-  console.log(`Servidor escuchando en http://localhost:${port}`);
+    console.log(`Servidor escuchando en http://localhost:${port}`);
 });
