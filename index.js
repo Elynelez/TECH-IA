@@ -36,12 +36,13 @@ async function downloadAudioFiles() {
         const orgPath = path.join(datasetPath, folderName, 'org');
         fs.mkdirSync(orgPath, { recursive: true });
 
-        for (const [fileName, fileUrl] of Object.entries(folderContent.org)) {
+        for (const [fileName, fileId] of Object.entries(folderContent.org)) {
             const localFilePath = path.join(orgPath, fileName);
 
             // Solo descargar si el archivo no existe
             if (!fs.existsSync(localFilePath)) {
-                const response = await fetch(fileUrl);
+                const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                const response = await fetch(url);
 
                 if (response.ok) {
                     const fileStream = fs.createWriteStream(localFilePath);
@@ -53,6 +54,18 @@ async function downloadAudioFiles() {
             }
         }
     }
+
+    exec('python helpers/cutAudios.py', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error al ejecutar el script de Python: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`Error en el script de Python: ${stderr}`);
+            return;
+        }
+        console.log(`Salida del script de Python:\n${stdout}`);
+    });
 }
 
 
@@ -142,7 +155,7 @@ function getAudioCounts() {
                 if (response.message.toLowerCase() == slang.toLowerCase()) {
                     res.json(response)
                 } else {
-                    res.json({ message: 'La frase no coincide.' })
+                    res.json({ message: 'La frase no coincide.' , predicted_class: "error"})
                 }
 
             });

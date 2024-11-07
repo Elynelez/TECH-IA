@@ -24,24 +24,37 @@
     "dataset": {
         "Elian": {
             "org": {
-                "elian.wav": "https://www.dropbox.com/scl/fi/dg2jzsz607c4i64p9pllk/elian_1.wav?rlkey=sb432ri1sm9yvgd3e5anbame2&st=tz9qfmke&dl=1"
+                "elian_1.wav": "1p4Of3YcyIQyDIt2G4_gycHeAcQE1jPi5",
+                "elian_2.wav": "1WjJmoNf2vJjWygYaUQb6Dwx_vya_57w6",
+                "elian_3.wav": "17Y7hfqNyJWu1NHNtYeO80KiBBng5hGO5",
+                "elian_4.wav": "1SI1wMyorTB47GUK4DApoh-fBEh3kyNOx",
+                "elian_5.wav": "1ngnHJz-EIAFmioZT25Z0PCh-BrilbE1Z"
             }
         },
         "Edison": {
             "org": {
-                "Edison.wav": "https://www.dropbox.com/scl/fi/e2p2yjlwrqhdgui4rebiv/Edison_1.wav?rlkey=a6xdzpici67640a9pd776rku8&st=04l5h2fd&dl=1"
+                "Edison_1.wav": "1bo6_t0TDLUZoDTrNElb_H7MxeeJoDRne",
+                "Edison_2.wav": "1an00Q1IZznKTU-2RgegiXaWzqEC3TfDO",
+                "Edison_3.wav": "1AIF9a9EVzR13kKMXkEMwNrX66yatCaUK"
             }
         },
         "Eddy": {
             "org": {
-                "SANTIAGO.wav": "https://www.dropbox.com/scl/fi/ka0e5jye00jqg33ix729a/eddy_1.wav?rlkey=8kl5pl71y5vcthw3qjl17264e&st=ixzfz1fk&dl=1"
+                "eddy_1.wav": "11qD1KaO5C7VDUSNptrzXTTvFjWcuzbhz",
+                "eddy_2.wav": "1zoz5pamBL79x8yR3-4Ufa0IgaLOG6uLU",
+                "eddy_3.wav": "1eg4oWhC_xG_sZ13VpcO65GaxPgE4u6I9"
             }
         },
         "Diego": {
             "org": {
-                "DQ BBC Asteroides Cel.wav": "https://www.dropbox.com/scl/fi/ch247tiojl4aj3jfduje2/diego_1.wav?rlkey=c4b7ru0c0sce4w2m3zscrcfdd&st=xkhe75fk&dl=1",
-                "DQ BBC Asteroides PC.wav": "https://www.dropbox.com/scl/fi/g6olhkqxjoj1iqjz9kfkx/diego_2.wav?rlkey=dcvsuba3yy69gi6pfg8y3tpzu&st=teemfveo&dl=1",
-                "DQ BBC Internet.wav": "https://www.dropbox.com/scl/fi/mh7sg6r0v7omjpd4xy6h2/diego_3.wav?rlkey=92obw7wgybyk1mb2mqr2n68jf&st=h2rtjihl&dl=1"
+                "diego_1.wav": "1ttT3PeD-CRNRO108c3Ch0qJcrcn1cB4s",
+                "diego_2.wav": "1nwZqdVJEZNsPDv_27WuHSeKRDmPI0oYw",
+                "diego_3.wav": "1CYuPWD9U9k7FM9nPDyh1miABzcSL-079",
+                "diego_4.wav": "1ih7fPUDAIrl-Qft7q_OOfYKf9rKqCIK1",
+                "diego_5.wav": "1sq6k_HxEM5b1LrI32FluLBt1U64GZ8Ga",
+                "diego_6.wav": "10YNmYLk9lIK_SUMWfiFo94zfsNwwA-CI",
+                "diego_7.wav": "1UNnOfnD5yD7J_T-Yjjff0lcFT2yE8VVF",
+                "diego_8.wav": "1vd6EVoas8vAu0UrjYomLoABlcWho0PR3"
             }
         }
     },

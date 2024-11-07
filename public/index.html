@@ -149,7 +149,7 @@
                 })
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById('resultado').textContent = data.message;
+                        document.getElementById('resultado').textContent = data.message + data.predicted_class;
 
                         if (data.message.includes("Usuario o contraseña incorrectos.")) {
                             const usernameInput = document.getElementById('username');

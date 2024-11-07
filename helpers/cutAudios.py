@@ -25,4 +25,9 @@ def cut_and_normalize_audios():
                 for i, start in enumerate(range(0, len(audio), segment_length)):
                     segment = audio[start:start + segment_length]
                     segment = segment.apply_gain(-segment.max_dBFS)  # Normalización
+                    if len(audio) < segment_length:
+                        print(f'Archivo {audio_file} es demasiado corto para segmentar.')
+                        continue
                     segment.export(os.path.join(cut_path, f"{audio_file}_part{i}.wav"), format="wav")
+
+cut_and_normalize_audios()
