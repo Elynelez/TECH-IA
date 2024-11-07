@@ -51,7 +51,7 @@ def load_data(data_dir):
 
     return np.array(features), np.array(labels)
 
-def main():
+def create_model():
     data_dir = 'dataset'
     features, labels = load_data(data_dir)
 
