@@ -143,25 +143,44 @@
                 formData.append('audio', audioBlob, 'grabacion.wav')
                 formData.append('slang', currentPhrase)
 
-                fetch('/api/python', {
+                fetch('/filter', {
                     method: 'POST',
                     body: formData,
                 })
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById('resultado').textContent = data.message + data.predicted_class;
 
                         if (data.message.includes("Usuario o contraseña incorrectos.")) {
                             const usernameInput = document.getElementById('username');
                             const passwordInput = document.getElementById('password');
                             usernameInput.classList.add('border-red-500');
                             passwordInput.classList.add('border-red-500');
+                        } else {
+                            console.log(data.message)
+                            return fetch('/predict/tfmodel', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    audioFilePath: data.message.replace("\\", "/")  // Asegúrate de que esto sea lo esperado
+                                })
+                            })
+                                .then(response => response.json())
+                                .then(prediction => {
+                                    console.log(prediction);
+                                    document.getElementById('resultado').textContent = prediction.message + prediction.predicted_class;
+                                })
+                                .catch(error => {
+                                    console.error('Error al realizar la predicción:', error);
+                                });
                         }
                     })
                     .catch(error => console.error('Error:', error))
                     .finally(() => {
                         spinner.classList.add("hidden"); // Ocultar el spinner
                     });
+
                 audioRecorded = false;
             }
         });

@@ -6,9 +6,32 @@ const { exec } = require('child_process'); // Para ejecutar scripts de Python
 const path = require('path'); // Para manejar rutas de archivos
 const app = express();
 const port = 3000;
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 // Configurar carpeta estática para servir index.html
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use((req, res, next) => {
+    console.log(`Request URL: ${req.url}`);
+    next();
+});
+
+async function checkPythonServerReady(url, maxAttempts = 10, interval = 1000) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                console.log('Servidor de Python está listo.');
+                return true;
+            }
+        } catch (error) {
+            console.log(`Intento ${attempt}: El servidor de Python aún no está listo. Reintentando en ${interval}ms...`);
+            await new Promise(resolve => setTimeout(resolve, interval));
+        }
+    }
+    console.error('El servidor de Python no respondió después de varios intentos.');
+    return false;
+}
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -21,11 +44,29 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 const databasePath = path.join(__dirname, 'public/database.json');
-const datasetPath = path.join(__dirname, 'dataset');
 
 function readDatabase() {
     const data = fs.readFileSync(databasePath, 'utf8');
     return JSON.parse(data).dataset;
+}
+
+async function startPythonAndInitializeProxy() {
+    exec('python index.py', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error al ejecutar el script de Python: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`Error en el script de Python: ${stderr}`);
+            return;
+        }
+        console.log(`Salida del script de Python:\n${stdout}`);
+    });
+
+    const serverReady = await checkPythonServerReady('http://localhost:5000/popo');
+    if (serverReady) {
+        app.use(createProxyMiddleware(['/popo', '/predict'], { target: "http://localhost:5000", "secure": "false" }));
+    }
 }
 
 async function downloadAudioFiles() {
@@ -54,70 +95,20 @@ async function downloadAudioFiles() {
             }
         }
     }
-
-    exec('python helpers/cutAudios.py', (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error al ejecutar el script de Python: ${error.message}`);
-            return;
-        }
-        if (stderr) {
-            console.error(`Error en el script de Python: ${stderr}`);
-            return;
-        }
-        console.log(`Salida del script de Python:\n${stdout}`);
-    });
-}
-
-
-function getAudioCounts() {
-    const result = {};
-
-    // Recorre cada carpeta dentro de 'dataset'
-    fs.readdirSync(datasetPath).forEach((folder) => {
-        const folderPath = path.join(datasetPath, folder);
-        const orgPath = path.join(folderPath, 'org');
-        const cutPath = path.join(folderPath, 'cut');
-
-        // Inicializa el conteo de archivos
-        let orgCount = 0;
-        let cutCount = 0;
-
-        // Cuenta los archivos en la carpeta 'org' si existe
-        if (fs.existsSync(orgPath)) {
-            orgCount = fs.readdirSync(orgPath).filter(file => file.endsWith('.wav')).length;
-        }
-
-        // Cuenta los archivos en la carpeta 'cut' si existe
-        if (fs.existsSync(cutPath)) {
-            cutCount = fs.readdirSync(cutPath).filter(file => file.endsWith('.wav')).length;
-        }
-
-        // Almacena los conteos en el objeto de resultados
-        result[folder] = {
-            org: orgCount,
-            cut: cutCount
-        };
-    });
-
-    return result;
 }
 
 (async () => {
     await downloadAudioFiles();
+    await startPythonAndInitializeProxy();
 
-    await app.get('/api/audios', (req, res) => {
-        const audioCounts = getAudioCounts();
-        res.json(audioCounts);
-    });
-
-    await app.post('/api/python', upload.single('audio'), (req, res) => {
+    app.post('/filter', upload.single('audio'), (req, res) => {
         console.log(req.body)
 
         if (!req.file) {
             return res.json({ message: "No se ha cargado ningún archivo." });
         }
 
-        const { username, password, slang } = req.body;
+        const { username, password } = req.body;
 
         // Leer el archivo database.json
         fs.readFile(databasePath, 'utf8', (err, data) => {
@@ -134,32 +125,11 @@ function getAudioCounts() {
             if (!user) {
                 return res.json({ message: 'Usuario o contraseña incorrectos.' });
             }
-
-            const audioFilePath = req.file.path; // Ruta del archivo de audio
-            const pythonScriptPath = path.join(__dirname, 'index.py');
-            const pythonCommand = process.platform === "win32" ? "python" : "python3";
-
-            // Ejecutar el script de Python
-            exec(`${pythonCommand} "${pythonScriptPath}" "${audioFilePath}"`, (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`Error ejecutando el script: ${error.message}`);
-                    return res.json({ message: 'Error ejecutando el script de Python.' });
-                }
-                if (stderr) {
-                    console.error(`Error en el script: ${stderr}`);
-                    return res.json({ message: 'Error en el script de Python.' });
-                }
-
-                // Procesar la salida del script Python
-                const response = JSON.parse(stdout);
-                if (response.message.toLowerCase() == slang.toLowerCase()) {
-                    res.json(response)
-                } else {
-                    res.json({ message: 'La frase no coincide.' , predicted_class: "error"})
-                }
-
-            });
         });
+
+        const audioFilePath = req.file.path
+
+        return res.json({message: audioFilePath})
     });
 
     // Iniciar el servidor

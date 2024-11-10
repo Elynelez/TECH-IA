@@ -1,27 +1,36 @@
-import sys
-import json
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import librosa
+import numpy as np
+from tensorflow.keras.models import load_model
+import noisereduce as nr
+from pydub import AudioSegment
 import scipy.signal as signal
 import soundfile as sf
 import os
-import numpy as np
-import librosa
-import noisereduce as nr
-from pydub import AudioSegment
-from helpers.cutAudios import cut_and_normalize_audios
 from helpers.textAudio import message
-from helpers.modelAudios import extract_features, create_model, load_saved_model
+from helpers.models.svcModel import extract_features, load_saved_model
 
-# Probar un archivo de audio nuevo
-def test_audio(audio_file, model, label_encoder):
-    # Extraer características del archivo de audio de prueba
-    feature = extract_features(audio_file).reshape(1, -1)
-    
-    # Predecir probabilidades para cada clase
-    class_probabilities = model.predict_proba(feature).flatten()
-    
-    # Obtener el índice de la clase predicha
+app = Flask(__name__)
+CORS(app, origins=["http://localhost:3000"])
+
+model = load_model('audio_classification_model.h5')
+classes = ['Diego', 'Edison', 'Elian', 'Nadie', 'Eddy']
+fixed_length = 50
+
+def compute_mfccs(audio, n_mfcc=40, fixed_length=156, window_size=1024, hop_length=512):
+    mfccs = librosa.feature.mfcc(y=audio, sr=16000, n_mfcc=n_mfcc, n_fft=window_size, hop_length=hop_length)
+    current_length = mfccs.shape[1]
+    return np.pad(mfccs, ((0, 0), (0, fixed_length - current_length)), mode='constant') if current_length < fixed_length else mfccs[:, :fixed_length]
+
+def test_audio_mfccs(file_path, model):
+    audio_data, sample_rate = librosa.load(file_path, sr=16000)
+    mfccs = compute_mfccs(audio_data)
+    mfccs = np.expand_dims(mfccs, axis=0)
+    mfccs = np.expand_dims(mfccs, axis=-1)
+    predictions = model.predict(mfccs)
+    class_probabilities = predictions[0]
     predicted_class_index = np.argmax(class_probabilities)
-    
     return class_probabilities, predicted_class_index
 
 def enhance_audio(audio_file):
@@ -61,37 +70,74 @@ def enhance_audio(audio_file):
     
     return enhanced_audio_path
 
-if __name__ == "__main__":
-    # Asegurarse de que se pase el archivo de audio como argumento
-    if len(sys.argv) > 1:
-
-        # Entrenar el modelo
-        if os.path.exists('model.pkl') and os.path.exists('label_encoder.pkl'):
-            clf, le = load_saved_model()
-        else:
-            clf, le = create_model()
-
-        # # Probar un audio de prueba
-        audio_file_path = sys.argv[1]
-        enhanced_audio_file = enhance_audio(audio_file_path)
-        class_probabilities, predicted_class_index = test_audio(enhanced_audio_file, clf, le)
-        
-        # Mostrar las probabilidades por clase
-        classes = le.classes_
-        
-        # # Mostrar la clase y precisión predichas
-        predicted_class = classes[predicted_class_index]
-        accuracy = class_probabilities[predicted_class_index]
-
-        message_response = message(audio_file_path)
-        
-        message_response["predicted_class"] = predicted_class
-        message_response["accuracy"] = round(accuracy, 4)
-
-        print(json.dumps(message_response))
-    else:
-        print(json.dumps({'message': "No se proporcionó un archivo de audio."}))
+def test_audio_svc(audio_file, model, label_encoder):
+    # Extraer características del archivo de audio de prueba
+    feature = extract_features(audio_file).reshape(1, -1)
     
+    # Predecir probabilidades para cada clase
+    class_probabilities = model.predict_proba(feature).flatten()
     
+    # Obtener el índice de la clase predicha
+    predicted_class_index = np.argmax(class_probabilities)
+    
+    return class_probabilities, predicted_class_index
+
+@app.route('/predict/tfmodel', methods=['POST'])
+def predict_tfmodel():
+    # Obtener los datos JSON del cuerpo de la solicitud
+    data = request.get_json()
+
+    # # Acceder a 'audioFilePath' desde el JSON
+    file_path = data.get('audioFilePath')
+    enhanced_audio_file = enhance_audio(file_path)
+    # Procesa la solicitud y obtiene las probabilidades y el índice de clase predicha
+    class_probabilities, predicted_class_index = test_audio_mfccs(enhanced_audio_file, model)
+    predicted_class = classes[predicted_class_index]
+    accuracy = float(class_probabilities[predicted_class_index])  # Conversión a float
+
+    # Convierte los valores a tipos nativos de Python
+    class_probabilities = [float(prob) for prob in class_probabilities]
+
+    message_response = message(file_path)
+        
+    message_response["predicted_class"] = predicted_class
+    message_response["accuracy"] = round(accuracy, 4)
+    message_response['probabilities'] = {classes[i]: round(class_probabilities[i], 4) for i in range(len(classes))}
+
+    return jsonify(message_response)
+
+@app.route('/predict/svcmodel', methods=['POST'])
+def predict_svcmodel():
+    # Obtener los datos JSON del cuerpo de la solicitud
+    data = request.get_json()
+
+    # cargar modelos
+    clf, le = load_saved_model()
+
+    # # Probar un audio de prueba
+    audio_file_path = data.get('audioFilePath')
+    enhanced_audio_file = enhance_audio(audio_file_path)
+    class_probabilities, predicted_class_index = test_audio_svc(enhanced_audio_file, clf, le)
+    
+    # Mostrar las probabilidades por clase
+    classes = le.classes_
+    
+    # # Mostrar la clase y precisión predichas
+    predicted_class = classes[predicted_class_index]
+    accuracy = class_probabilities[predicted_class_index]
+
+    message_response = message(audio_file_path)
+    
+    message_response["predicted_class"] = predicted_class
+    message_response["accuracy"] = round(accuracy, 4)
+
+    return jsonify(message_response)
+
+@app.route('/popo', methods=['GET'])
+def popo():
+    return jsonify({'message': '23123'})
+
+if __name__ == '__main__':
+    app.run(host='localhost', debug=True, port=5000)    
 
     
